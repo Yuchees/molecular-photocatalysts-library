@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Interactive 2D molecular structure visualisation application
@@ -6,133 +6,253 @@ Using T-SNE for dimensionality reduction
 @author: Yu Che
 """
 import dash
+import dash_bio as bio
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
+from utils import load_json
 
 app = dash.Dash(__name__)
 server = app.server
 
-df = pd.read_pickle('./computed_data.pkl')
+df = pd.read_csv('./data/electronic_features.csv', index_col='ID')
+columns_dict = [{'label': i, 'value': i} for i in df.columns[:12]]
+size_dict = columns_dict + [{'label': 'Constant', 'value': 5}]
 axis_template = dict(
     showgrid=False,
     zeroline=False,
     showline=False,
     showticklabels=False,
 )
-app.layout = html.Div([
-    html.Div([
-        dcc.Graph(
-            id='clickable_plot',
-            style={'float': 'left', 'display': 'inline-block'}
+
+app.layout = html.Div(
+    id='main',
+    className='app_main',
+    children=[
+        # Dash title and icon
+        html.Div(
+            id='mol3d-title',
+            children=[
+                html.Img(
+                    id='dash-logo',
+                    src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/"
+                        "logo/new-branding/dash-logo-by-plotly-stripe.png"
+                ),
+                html.H1(id='chart-title', children='Photo catalysis libraries')
+            ]
         ),
-        dcc.RadioItems(
-            id='cluster_name',
-            options=[
-                {'label': '3', 'value': 3},
-                {'label': '4', 'value': 4},
-                {'label': '5', 'value': 5},
-                {'label': '6', 'value': 6},
-                {'label': '7', 'value': 7},
-                {'label': '8', 'value': 8},
-                {'label': '9', 'value': 9},
-                {'label': '10', 'value': 10},
-                {'label': '11', 'value': 11},
-                {'label': '12', 'value': 12},
-                {'label': '13', 'value': 13},
-                {'label': '14', 'value': 14},
-                {'label': '15', 'value': 15},
-                {'label': '16', 'value': 16},
-                {'label': '17', 'value': 17},
-                {'label': '18', 'value': 18},
-                {'label': '19', 'value': 19},
-                {'label': '20', 'value': 20},
-                {'label': '25', 'value': 25},
-                {'label': '29', 'value': 29}
-            ],
-            value=10
+        # Dash graph
+        dcc.Graph(id='clickable_plot'),
+        # Axises controller
+        html.Div(
+            id='plot-controller',
+            children=[
+                html.H3('Chart types:'),
+                dcc.RadioItems(
+                    id='chart_type',
+                    options=[
+                        {'label': '5D scatter chart', 'value': '5d'},
+                        {'label': 'SOAP cluster chart', 'value': 'cluster'}
+                    ],
+                    value='cluster'
+                ),
+                html.H3('Axises control:'),
+                html.Div(
+                    id='color-bar-control',
+                    className='dropdown-control',
+                    children=[
+                        html.H3('Colour bar:'),
+                        dcc.Dropdown(
+                            id='colour_column',
+                            options=columns_dict,
+                            value='HER'
+                        )
+                    ]
+                ),
+                html.Div(
+                    id='size-control',
+                    className='dropdown-control',
+                    children=[
+                        html.H3('Scatter size:'),
+                        dcc.Dropdown(
+                            id='size_column',
+                            options=size_dict,
+                            value=5
+                        )
+                    ]
+                ),
+                html.Div(
+                    id='x-axis',
+                    className='dropdown-control',
+                    children=[
+                        html.H3('X-axis:'),
+                        dcc.Dropdown(
+                            id='x_axis_column',
+                            className='axis_controller',
+                            options=columns_dict,
+                            value='IP'
+                        )
+                    ]
+                ),
+                html.Div(
+                    id='y-axis',
+                    className='dropdown-control',
+                    children=[
+                        html.H3('Y-axis:'),
+                        dcc.Dropdown(
+                            id='y_axis_column',
+                            className='axis_controller',
+                            options=columns_dict,
+                            value='EA'
+                        )
+                    ]
+                ),
+                html.Div(
+                    id='z-axis',
+                    className='dropdown-control',
+                    children=[
+                        html.H3('Z-axis:'),
+                        dcc.Dropdown(
+                            id='z_axis_column',
+                            className='axis_controller',
+                            options=columns_dict,
+                            value='S1-T1'
+                        )
+                    ]
+                ),
+                html.P('The  colour, size, X, Y and Z axis controller are '
+                       'disabled when choose cluster chart.')
+            ]
+        ),
+        html.Div(
+            id='hover_structure',
+            children=[
+                html.H3(className='viewer-title', children='Hover structure:'),
+                dcc.Loading(id='loading_hover', className='loading')
+            ]),
+        html.Div(
+            id='selected_structure',
+            children=[
+                html.H3(className='viewer-title', children='Selected structure:'),
+                dcc.Loading(id='loading_selected', className='loading')
+            ])
+    ]
+)
+
+
+def structure_viewer(interactive_data, chart_name, click_data=None):
+
+    def single_3d_viewer(json_file):
+        mol_data, style_data = load_json(json_file)
+        mol_3d = bio.Molecule3dViewer(
+            id='mol-3d-viewer',
+            selectionType='atom',
+            styles=style_data,
+            modelData=mol_data
         )
-    ]),
-    html.Div([
-        html.H3('Hover molecule:'),
-        html.Div(id='hover_molecule'),
-        html.H3('Selected molecules:'),
-        html.Div(id='selected_molecule')],
-        style={'display': 'inline-block'}
-    )
-])
+        return mol_3d
 
-
-def images_component(data, cluster_name):
-    html_images = []
-
-    def html_image(name):
-        one_image = html.Img(
-            src='https://res.cloudinary.com/yucheimages/image/upload'
-                '/c_crop,g_west,h_300,w_300'
-                '/v1585751604/572_dataset/{}.png'.format(name),
-            style={'width': '300px', 'height': '300px'}
-        )
-        return one_image
-
-    cluster_series = df['kmeans_{}'.format(cluster_name)]
+    mol_div = []
     try:
-        number_molecules = len(data['points'])
-        print(data)
-        for i in range(number_molecules):
-            index = int(data['points'][i]['pointIndex'])
-            label_idx = data['points'][i]['curveNumber']
-            idx = df[cluster_series == label_idx].iloc[index].name
-            print(idx)
-            html_images.append(html_image(idx))
+        for i in range(len(interactive_data['points'])):
+            if chart_name == '5d':
+                print(click_data)
+                index = int(interactive_data['points'][i]['pointNumber'])
+                structure_name = df.iloc[index].name
+            else:
+                print(interactive_data)
+                index = int(interactive_data['points'][i]['pointIndex'])
+                cluster_idx = interactive_data['points'][i]['curveNumber']
+                structure_name = df[df.group == cluster_idx].iloc[index].name
+            json_path = './data/json_data/{}.json'.format(structure_name)
+            mol_div.append(single_3d_viewer(json_path))
+    # Default structure
     except TypeError:
-        html_images.append(html_image('807'))
-    return html.Div(html_images)
+        json_path = './data/json_data/340.json'
+        mol_div.append(single_3d_viewer(json_path))
+    return mol_div
 
 
 @app.callback(
     dash.dependencies.Output('clickable_plot', 'figure'),
-    [dash.dependencies.Input('cluster_name', 'value')]
+    [dash.dependencies.Input('chart_type', 'value'),
+     dash.dependencies.Input('x_axis_column', 'value'),
+     dash.dependencies.Input('y_axis_column', 'value'),
+     dash.dependencies.Input('z_axis_column', 'value'),
+     dash.dependencies.Input('colour_column', 'value'),
+     dash.dependencies.Input('size_column', 'value')]
 )
-def update_graph(cluster_name_value):
-    cluster_series = df['kmeans_{}'.format(cluster_name_value)]
+def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
+                 z_axis_column_name, colour_column_value, size_column_value):
     fig = go.Figure()
-    for label in range(cluster_name_value):
-        fig.add_trace(go.Scatter(
-            x=df[cluster_series == label].loc[:, 'umap_soap_pos0'],
-            y=df[cluster_series == label].loc[:, 'umap_soap_pos1'],
-            mode='markers',
-            text=df[cluster_series == label].loc[:, 'HER'],
-            name=label,
-            marker=dict(size=df[cluster_series == label].loc[:, 'HER'] + 5)
-        ))
-    fig.update_layout(
-        clickmode='event+select',
-        title='SOAP distance matrix only, '
-              'using UMAP and KMeans algorithms',
-        hovermode='closest',
-        xaxis=axis_template,
-        yaxis=axis_template,
-        showlegend=True,
-        width=800,
-        height=600
-    )
+    if chart_type_value == 'cluster':
+        for cluster in range(5):
+            fig.add_trace(go.Scatter(
+                x=df[df.group == cluster].loc[:, 'pos_0'],
+                y=df[df.group == cluster].loc[:, 'pos_1'],
+                mode='markers',
+                text=df[df.group == cluster].loc[:, 'HER'],
+                name=cluster,
+                marker=dict(size=df[df.group == cluster].loc[:, 'HER'] + 5)
+            ))
+        fig.update_layout(
+            clickmode='event+select',
+            title='SOAP distance matrix only, '
+                  'using UMAP and KMeans algorithms',
+            xaxis=axis_template,
+            yaxis=axis_template,
+            showlegend=True,
+            width=800,
+            height=600
+        )
+    elif chart_type_value == '5d':
+        if isinstance(size_column_value, int):
+            size = 5
+        else:
+            size = df.loc[:, size_column_value] + 8
+        fig.add_trace(
+            go.Scatter3d(
+                x=df[x_axis_column_name],
+                y=df[y_axis_column_name],
+                z=df[z_axis_column_name],
+                mode='markers',
+                marker={'size': size,
+                        'color': df[colour_column_value],
+                        'colorbar': {'title': colour_column_value},
+                        'colorscale': 'RdBu',
+                        'showscale': True}
+            )
+        )
+        fig.update_layout(
+            title='5D scatter graph',
+            scene=dict(
+                xaxis={'title': x_axis_column_name, 'zeroline': True},
+                yaxis={'title': y_axis_column_name, 'zeroline': True},
+                zaxis={'title': z_axis_column_name, 'zeroline': True},
+            ),
+            width=800,
+            height=600
+        )
     return fig
 
 
-@app.callback(dash.dependencies.Output('hover_molecule', 'children'),
+@app.callback(dash.dependencies.Output('hover_structure', 'children'),
               [dash.dependencies.Input('clickable_plot', 'hoverData'),
-               dash.dependencies.Input('cluster_name', 'value')])
-def display_hover_image(hoverData, cluster_name_value):
-    return images_component(hoverData, cluster_name_value)
+               dash.dependencies.Input('chart_type', 'value')])
+def display_hover_image(hoverData, chart_type_value):
+    return structure_viewer(interactive_data=hoverData,
+                            chart_name=chart_type_value)
 
 
-@app.callback(dash.dependencies.Output('selected_molecule', 'children'),
+@app.callback(dash.dependencies.Output('selected_structure', 'children'),
               [dash.dependencies.Input('clickable_plot', 'selectedData'),
-               dash.dependencies.Input('cluster_name', 'value')])
-def display_selected_data(selectedData, cluster_name_value):
-    return images_component(selectedData, cluster_name_value)
+               dash.dependencies.Input('clickable_plot', 'clickData'),
+               dash.dependencies.Input('chart_type', 'value')])
+def display_selected_data(selectedData, clickData, chart_type_value):
+    return structure_viewer(interactive_data=selectedData,
+                            click_data=clickData,
+                            chart_name=chart_type_value)
 
 
 if __name__ == '__main__':
