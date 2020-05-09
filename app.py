@@ -48,7 +48,6 @@ app.layout = html.Div(
         html.Div(
             id='plot-controller',
             children=[
-                html.H3('Chart types:'),
                 dcc.RadioItems(
                     id='chart_type',
                     options=[
@@ -57,7 +56,6 @@ app.layout = html.Div(
                     ],
                     value='cluster'
                 ),
-                html.H3('Axises control:'),
                 html.Div(
                     id='color-bar-control',
                     className='dropdown-control',
@@ -66,7 +64,7 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id='colour_column',
                             options=columns_dict,
-                            value='HER'
+                            value='Hydrogen evolution rate / µmol/h'
                         )
                     ]
                 ),
@@ -74,7 +72,7 @@ app.layout = html.Div(
                     id='size-control',
                     className='dropdown-control',
                     children=[
-                        html.H3('Scatter size:'),
+                        html.H3('Size:'),
                         dcc.Dropdown(
                             id='size_column',
                             options=size_dict,
@@ -91,7 +89,7 @@ app.layout = html.Div(
                             id='x_axis_column',
                             className='axis_controller',
                             options=columns_dict,
-                            value='IP'
+                            value='IP / V vs. SHE'
                         )
                     ]
                 ),
@@ -104,7 +102,7 @@ app.layout = html.Div(
                             id='y_axis_column',
                             className='axis_controller',
                             options=columns_dict,
-                            value='EA'
+                            value='EA / V vs. SHE'
                         )
                     ]
                 ),
@@ -117,7 +115,7 @@ app.layout = html.Div(
                             id='z_axis_column',
                             className='axis_controller',
                             options=columns_dict,
-                            value='S1-T1'
+                            value='S1T1 / eV'
                         )
                     ]
                 ),
@@ -192,14 +190,12 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                 x=df[df.group == cluster].loc[:, 'pos_0'],
                 y=df[df.group == cluster].loc[:, 'pos_1'],
                 mode='markers',
-                text=df[df.group == cluster].loc[:, 'HER'],
+                text=df[df.group == cluster].iloc[:, 0],
                 name=cluster,
-                marker=dict(size=df[df.group == cluster].loc[:, 'HER'] + 5)
+                marker=dict(size=df[df.group == cluster].iloc[:, 0] + 5)
             ))
         fig.update_layout(
             clickmode='event+select',
-            title='SOAP distance matrix only, '
-                  'using UMAP and KMeans algorithms',
             xaxis=axis_template,
             yaxis=axis_template,
             showlegend=True,
