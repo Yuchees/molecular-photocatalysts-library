@@ -2,6 +2,7 @@
 /dash_3d_molecule_test.ipynb
 /data/pdb_file/
 /data/xyz_file/
+.idea/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
