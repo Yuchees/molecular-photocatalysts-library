@@ -155,13 +155,11 @@ def structure_viewer(interactive_data, chart_name, click_data=None):
     try:
         for i in range(len(interactive_data['points'])):
             if chart_name == '5d':
-                print(click_data)
                 index = int(interactive_data['points'][i]['pointNumber'])
                 structure_name = df.iloc[index].name
             else:
-                print(interactive_data)
                 index = int(interactive_data['points'][i]['pointIndex'])
-                cluster_idx = interactive_data['points'][i]['curveNumber']
+                cluster_idx = interactive_data['points'][i]['curveNumber'] + 1
                 structure_name = df[df.group == cluster_idx].iloc[index].name
             json_path = './data/json_data/{}.json'.format(structure_name)
             mol_div.append(single_3d_viewer(json_path))
@@ -185,20 +183,32 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                  z_axis_column_name, colour_column_value, size_column_value):
     fig = go.Figure()
     if chart_type_value == 'cluster':
-        for cluster in range(5):
+        colors = {1:'red', 2: 'purple', 4: 'blue', 5: 'orange',  3: 'green'}
+        for cluster in [1, 2, 3, 4, 5]:
             fig.add_trace(go.Scatter(
                 x=df[df.group == cluster].loc[:, 'pos_0'],
                 y=df[df.group == cluster].loc[:, 'pos_1'],
                 mode='markers',
                 text=df[df.group == cluster].iloc[:, 0],
                 name=cluster,
-                marker=dict(size=df[df.group == cluster].iloc[:, 0] + 5)
+                marker=dict(
+                    symbol = 'circle',
+                    opacity=0.5,
+                    color=colors[int(cluster)],
+                    line=dict(color='white', width=1),
+                    size=df[df.group == cluster].iloc[:, 0] + 8
+                )
             ))
         fig.update_layout(
             clickmode='event+select',
             xaxis=axis_template,
             yaxis=axis_template,
             showlegend=True,
+            legend=dict(
+                font=dict(family='Arial'),
+                itemsizing='constant'
+            ),
+            margin={'t': 30, 'b': 10, 'r': 30},
             width=800,
             height=600
         )
