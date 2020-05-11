@@ -39,7 +39,7 @@ app.layout = html.Div(
                     src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/"
                         "logo/new-branding/dash-logo-by-plotly-stripe.png"
                 ),
-                html.H1(id='chart-title', children='Photo catalysis libraries')
+                html.H1(id='chart-title', children='Small-molecule photocatalysts')
             ]
         ),
         # Dash graph
@@ -60,7 +60,7 @@ app.layout = html.Div(
                     id='color-bar-control',
                     className='dropdown-control',
                     children=[
-                        html.H3('Colour bar:'),
+                        html.H3('Symbol colour:'),
                         dcc.Dropdown(
                             id='colour_column',
                             options=columns_dict,
@@ -72,7 +72,7 @@ app.layout = html.Div(
                     id='size-control',
                     className='dropdown-control',
                     children=[
-                        html.H3('Size:'),
+                        html.H3('Symbol size:'),
                         dcc.Dropdown(
                             id='size_column',
                             options=size_dict,
@@ -119,8 +119,8 @@ app.layout = html.Div(
                         )
                     ]
                 ),
-                html.P('The  colour, size, X, Y and Z axis controller are '
-                       'disabled when choose cluster chart.')
+                html.P('Dropdown menus for symbol colour, symbol size, '
+                       'X, Y, and Z axes are only active for 5D explorer.')
             ]
         ),
         html.Div(
@@ -183,7 +183,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                  z_axis_column_name, colour_column_value, size_column_value):
     fig = go.Figure()
     if chart_type_value == 'cluster':
-        colors = {1:'red', 2: 'purple', 4: 'blue', 5: 'orange',  3: 'green'}
+        colors = {1: 'red', 2: 'purple', 4: 'blue', 5: 'orange',  3: 'green'}
         for cluster in [1, 2, 3, 4, 5]:
             fig.add_trace(go.Scatter(
                 x=df[df.group == cluster].loc[:, 'pos_0'],
@@ -192,7 +192,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                 text=df[df.group == cluster].iloc[:, 0],
                 name=cluster,
                 marker=dict(
-                    symbol = 'circle',
+                    symbol='circle',
                     opacity=0.5,
                     color=colors[int(cluster)],
                     line=dict(color='white', width=1),
@@ -201,6 +201,11 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
             ))
         fig.update_layout(
             clickmode='event+select',
+            title=dict(
+                text='2D UMAP embeddings of SOAP+REMatch chemical space',
+                font=dict(family='Arial', size=20),
+                y=0.95
+            ),
             xaxis=axis_template,
             yaxis=axis_template,
             showlegend=True,
@@ -208,7 +213,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                 font=dict(family='Arial'),
                 itemsizing='constant'
             ),
-            margin={'t': 30, 'b': 10, 'r': 30},
+            margin={'t': 55, 'b': 10, 'l': 30},
             width=800,
             height=600
         )
@@ -223,20 +228,37 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                 y=df[y_axis_column_name],
                 z=df[z_axis_column_name],
                 mode='markers',
-                marker={'size': size,
-                        'color': df[colour_column_value],
-                        'colorbar': {'title': colour_column_value},
-                        'colorscale': 'RdBu',
-                        'showscale': True}
+                marker=dict(
+                    size=size,
+                    color=df[colour_column_value],
+                    colorbar=dict(
+                        thicknessmode='pixels',
+                        thickness=25,
+                        title=dict(
+                            text=colour_column_value,
+                            side='right'
+                        )
+                    ),
+                    colorscale='RdBu',
+                    reversescale=True,
+                    showscale=True
+                )
             )
         )
         fig.update_layout(
-            title='5D scatter graph',
+            title=dict(
+                text='5D explorer of hydrogen evolution activity '
+                     'and molecular properties',
+                font=dict(family='Arial', size=20),
+                y=0.95
+            ),
             scene=dict(
                 xaxis={'title': x_axis_column_name, 'zeroline': True},
                 yaxis={'title': y_axis_column_name, 'zeroline': True},
                 zaxis={'title': z_axis_column_name, 'zeroline': True},
             ),
+            margin={'t': 55, 'b': 10, 'l': 30},
+            font=dict(family='Arial'),
             width=800,
             height=600
         )
