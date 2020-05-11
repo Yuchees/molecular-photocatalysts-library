@@ -39,7 +39,9 @@ app.layout = html.Div(
                     src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/"
                         "logo/new-branding/dash-logo-by-plotly-stripe.png"
                 ),
-                html.H1(id='chart-title', children='Small-molecule photocatalysts')
+                html.H1(
+                    id='chart-title',
+                    children='Small-molecule photocatalysts')
             ]
         ),
         # Dash graph
@@ -51,8 +53,8 @@ app.layout = html.Div(
                 dcc.RadioItems(
                     id='chart_type',
                     options=[
-                        {'label': '5D scatter chart', 'value': '5d'},
-                        {'label': 'SOAP cluster chart', 'value': 'cluster'}
+                        {'label': '5D explorer', 'value': '5d'},
+                        {'label': '2D chemical space', 'value': 'cluster'}
                     ],
                     value='cluster'
                 ),
@@ -151,23 +153,19 @@ def structure_viewer(interactive_data, chart_name, click_data=None):
         )
         return mol_3d
 
-    mol_div = []
     try:
-        for i in range(len(interactive_data['points'])):
-            if chart_name == '5d':
-                index = int(interactive_data['points'][i]['pointNumber'])
-                structure_name = df.iloc[index].name
-            else:
-                index = int(interactive_data['points'][i]['pointIndex'])
-                cluster_idx = interactive_data['points'][i]['curveNumber'] + 1
-                structure_name = df[df.group == cluster_idx].iloc[index].name
-            json_path = './data/json_data/{}.json'.format(structure_name)
-            mol_div.append(single_3d_viewer(json_path))
+        if chart_name == '5d':
+            index = int(interactive_data['points'][0]['pointNumber'])
+            structure_name = df.iloc[index].name
+        else:
+            index = int(interactive_data['points'][0]['pointIndex'])
+            cluster_idx = interactive_data['points'][0]['curveNumber'] + 1
+            structure_name = df[df.group == cluster_idx].iloc[index].name
+        json_path = './data/json_data/{}.json'.format(structure_name)
     # Default structure
     except TypeError:
         json_path = './data/json_data/340.json'
-        mol_div.append(single_3d_viewer(json_path))
-    return mol_div
+    return single_3d_viewer(json_path)
 
 
 @app.callback(
@@ -265,7 +263,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
     return fig
 
 
-@app.callback(dash.dependencies.Output('hover_structure', 'children'),
+@app.callback(dash.dependencies.Output('loading_hover', 'children'),
               [dash.dependencies.Input('clickable_plot', 'hoverData'),
                dash.dependencies.Input('chart_type', 'value')])
 def display_hover_image(hoverData, chart_type_value):
@@ -273,13 +271,11 @@ def display_hover_image(hoverData, chart_type_value):
                             chart_name=chart_type_value)
 
 
-@app.callback(dash.dependencies.Output('selected_structure', 'children'),
-              [dash.dependencies.Input('clickable_plot', 'selectedData'),
-               dash.dependencies.Input('clickable_plot', 'clickData'),
+@app.callback(dash.dependencies.Output('loading_selected', 'children'),
+              [dash.dependencies.Input('clickable_plot', 'clickData'),
                dash.dependencies.Input('chart_type', 'value')])
-def display_selected_data(selectedData, clickData, chart_type_value):
-    return structure_viewer(interactive_data=selectedData,
-                            click_data=clickData,
+def display_selected_data(clickData, chart_type_value):
+    return structure_viewer(interactive_data=clickData,
                             chart_name=chart_type_value)
 
 

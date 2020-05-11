@@ -1,5 +1,5 @@
 /*
-
+comments
  */
 
 #dash-logo {
@@ -29,6 +29,7 @@
 }
 
 #chart_type {
+    display: grid;
     font-family: "Ariel", sans-serif;
     font-size: 1.2em;
     color: #3D4B56;
@@ -46,10 +47,6 @@ H3 {
     display: inline-block;
     width: 45%;
     margin: 5px;
-}
-
-#size-control {
-    display: block !important;
 }
 
 
