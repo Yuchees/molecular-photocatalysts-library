@@ -141,7 +141,7 @@ app.layout = html.Div(
 )
 
 
-def structure_viewer(interactive_data, chart_name, click_data=None):
+def structure_viewer(interactive_data, chart_name):
 
     def single_3d_viewer(json_file):
         mol_data, style_data = load_json(json_file)
@@ -198,7 +198,9 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                 )
             ))
         fig.update_layout(
-            clickmode='event+select',
+            clickmode='event',
+            hovermode='closest',
+            hoverdistance=-1,
             title=dict(
                 text='2D UMAP embeddings of SOAP+REMatch chemical space',
                 font=dict(family='Arial', size=20),
