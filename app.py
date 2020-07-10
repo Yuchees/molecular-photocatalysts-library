@@ -126,12 +126,6 @@ app.layout = html.Div(
             ]
         ),
         html.Div(
-            id='hover_structure',
-            children=[
-                html.H3(className='viewer-title', children='Hover structure:'),
-                dcc.Loading(id='loading_hover', className='loading')
-            ]),
-        html.Div(
             id='selected_structure',
             children=[
                 html.H3(className='viewer-title', children='Selected structure:'),
@@ -266,14 +260,6 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
     return fig
 
 
-@app.callback(dash.dependencies.Output('loading_hover', 'children'),
-              [dash.dependencies.Input('clickable_plot', 'hoverData'),
-               dash.dependencies.Input('chart_type', 'value')])
-def display_hover_image(hoverData, chart_type_value):
-    return structure_viewer(interactive_data=hoverData,
-                            chart_name=chart_type_value)
-
-
 @app.callback(dash.dependencies.Output('loading_selected', 'children'),
               [dash.dependencies.Input('clickable_plot', 'clickData'),
                dash.dependencies.Input('chart_type', 'value')])
@@ -283,4 +269,4 @@ def display_selected_data(clickData, chart_type_value):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
