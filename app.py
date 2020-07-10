@@ -17,7 +17,7 @@ app = dash.Dash(__name__)
 server = app.server
 
 df = pd.read_csv('./data/electronic_features.csv', index_col='ID')
-columns_dict = [{'label': i, 'value': i} for i in df.columns[:12]]
+columns_dict = [{'label': i, 'value': i} for i in df.columns[1:15]]
 size_dict = columns_dict + [{'label': 'Constant', 'value': 5}]
 axis_template = dict(
     showgrid=False,
@@ -194,7 +194,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                     opacity=0.5,
                     color=colors[int(cluster)],
                     line=dict(color='white', width=1),
-                    size=df[df.group == cluster].iloc[:, 0] + 8
+                    size=df[df.group == cluster].iloc[:, 1] + 8
                 )
             ))
         fig.update_layout(
@@ -228,6 +228,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                 y=df[y_axis_column_name],
                 z=df[z_axis_column_name],
                 mode='markers',
+                text=df.iloc[:, 0],
                 marker=dict(
                     size=size,
                     color=df[colour_column_value],
