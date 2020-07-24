@@ -137,29 +137,41 @@ app.layout = html.Div(
 
 def structure_viewer(interactive_data, chart_name):
 
-    def single_3d_viewer(json_file):
+    def single_3d_viewer(json_file, structure_index):
         mol_data, style_data = load_json(json_file)
-        mol_3d = bio.Molecule3dViewer(
-            id='mol-3d-viewer',
-            selectionType='atom',
-            styles=style_data,
-            modelData=mol_data
+        mol_3d = html.Div(
+            id='viewer',
+            children=[
+                html.P('Structure ID: {}'.format(structure_index)),
+                bio.Molecule3dViewer(
+                    id='mol-3d-viewer',
+                    selectionType='atom',
+                    styles=style_data,
+                    modelData=mol_data
+                )
+            ]
         )
         return mol_3d
-
+    mol_div = []
     try:
-        if chart_name == '5d':
-            index = int(interactive_data['points'][0]['pointNumber'])
-            structure_name = df.iloc[index].name
-        else:
-            index = int(interactive_data['points'][0]['pointIndex'])
-            cluster_idx = interactive_data['points'][0]['curveNumber'] + 1
-            structure_name = df[df.group == cluster_idx].iloc[index].name
-        json_path = './data/json_data/{}.json'.format(structure_name)
+        for i in range(len(interactive_data['points'])):
+            if chart_name == '5d':
+                index = int(interactive_data['points'][0]['pointNumber'])
+                structure_name = df.iloc[index].name
+                id_in_paper = df.iloc[index, 0]
+            else:
+                index = int(interactive_data['points'][0]['pointIndex'])
+                cluster_idx = interactive_data['points'][0]['curveNumber'] + 1
+                structure_name = df[df.group == cluster_idx].iloc[index].name
+                id_in_paper = df[df.group == cluster_idx].iloc[index][0]
+            json_path = './data/json_data/{}.json'.format(structure_name)
+            viewer = single_3d_viewer(json_path, int(id_in_paper))
+            mol_div.append(viewer)
     # Default structure
     except TypeError:
         json_path = './data/json_data/340.json'
-    return single_3d_viewer(json_path)
+        mol_div.append(single_3d_viewer(json_path, 'default 153'))
+    return mol_div
 
 
 @app.callback(
@@ -192,7 +204,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                 )
             ))
         fig.update_layout(
-            clickmode='event',
+            clickmode='event+select',
             hovermode='closest',
             hoverdistance=-1,
             title=dict(
@@ -241,6 +253,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
             )
         )
         fig.update_layout(
+            clickmode='event+select',
             title=dict(
                 text='5D explorer of hydrogen evolution activity '
                      'and molecular properties',
@@ -262,10 +275,14 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
 
 @app.callback(dash.dependencies.Output('loading_selected', 'children'),
               [dash.dependencies.Input('clickable_plot', 'clickData'),
+               dash.dependencies.Input('clickable_plot', 'selectedData'),
                dash.dependencies.Input('chart_type', 'value')])
-def display_selected_data(clickData, chart_type_value):
-    return structure_viewer(interactive_data=clickData,
-                            chart_name=chart_type_value)
+def display_selected_data(clickData, selectedData, chart_type_value):
+    if chart_type_value == '5d':
+        data = clickData
+    else:
+        data = selectedData
+    return structure_viewer(interactive_data=data, chart_name=chart_type_value)
 
 
 if __name__ == '__main__':

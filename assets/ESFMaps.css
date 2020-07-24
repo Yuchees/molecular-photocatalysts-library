@@ -43,6 +43,16 @@ H3 {
     margin: 2px !important;
 }
 
+H4 {
+    font-family: "Ariel", sans-serif;
+    font-size: 1.07em !important;
+    margin: 2px !important;
+}
+
+P {
+    margin: 0px 10px !important;
+}
+
 .dropdown-control {
     display: inline-block;
     width: 45%;
@@ -70,6 +80,10 @@ H3 {
 }
 .loading {
     height: 300px;
+}
+
+#viewer {
+    display: inline-block;
 }
 
 #mol-3d-viewer > .molecule-3d {
