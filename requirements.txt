@@ -1,14 +1,14 @@
 certifi
 Click
-dash
-dash-core-components
-dash-html-components
-dash-renderer
-dash-table
+dash==1.8.0
+dash-core-components==1.7.0
+dash-html-components==1.0.2
+dash-renderer==1.2.3
+dash-table==4.6.0
 dash-bio==0.4.5
 dash-bio-utils==0.0.5
-Flask
-Flask-Compress
+Flask==1.1.2
+Flask-Compress==1.4.0
 future
 itsdangerous
 Jinja2
@@ -21,4 +21,4 @@ python-dateutil
 pytz
 six
 Werkzeug
-gunicorn
+gunicorn==20.0.4

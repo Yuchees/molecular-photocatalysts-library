@@ -160,8 +160,8 @@ def structure_viewer(interactive_data, chart_name):
                 structure_name = df.iloc[index].name
                 id_in_paper = df.iloc[index, 0]
             else:
-                index = int(interactive_data['points'][0]['pointIndex'])
-                cluster_idx = interactive_data['points'][0]['curveNumber'] + 1
+                index = int(interactive_data['points'][i]['pointIndex'])
+                cluster_idx = interactive_data['points'][i]['curveNumber'] + 1
                 structure_name = df[df.group == cluster_idx].iloc[index].name
                 id_in_paper = df[df.group == cluster_idx].iloc[index][0]
             json_path = './data/json_data/{}.json'.format(structure_name)
