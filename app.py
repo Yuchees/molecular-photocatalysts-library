@@ -17,7 +17,7 @@ app = dash.Dash(__name__)
 server = app.server
 
 df = pd.read_csv('./data/electronic_features.csv', index_col='ID')
-columns_dict = [{'label': i, 'value': i} for i in df.columns[1:15]]
+columns_dict = [{'label': i, 'value': i} for i in df.columns[4:]]
 size_dict = columns_dict + [{'label': 'Constant', 'value': 5}]
 axis_template = dict(
     showgrid=False,
@@ -91,7 +91,7 @@ app.layout = html.Div(
                             id='x_axis_column',
                             className='axis_controller',
                             options=columns_dict,
-                            value='IP / V vs. SHE'
+                            value='EA* / V'
                         )
                     ]
                 ),
@@ -104,7 +104,7 @@ app.layout = html.Div(
                             id='y_axis_column',
                             className='axis_controller',
                             options=columns_dict,
-                            value='EA / V vs. SHE'
+                            value='S1-T1 / eV'
                         )
                     ]
                 ),
@@ -117,7 +117,7 @@ app.layout = html.Div(
                             id='z_axis_column',
                             className='axis_controller',
                             options=columns_dict,
-                            value='S1T1 / eV'
+                            value='E(exciton binding) / eV'
                         )
                     ]
                 ),
@@ -200,7 +200,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                     opacity=0.5,
                     color=colors[int(cluster)],
                     line=dict(color='white', width=1),
-                    size=df[df.group == cluster].iloc[:, 1] + 8
+                    size=df[df.group == cluster].iloc[:, 4] + 8
                 )
             ))
         fig.update_layout(
