@@ -17,7 +17,7 @@ app = dash.Dash(__name__)
 server = app.server
 
 df = pd.read_csv('./data/electronic_features.csv', index_col='ID')
-columns_dict = [{'label': i, 'value': i} for i in df.columns[4:]]
+columns_dict = [{'label': i, 'value': i} for i in df.columns[3:15]]
 size_dict = columns_dict + [{'label': 'Constant', 'value': 5}]
 axis_template = dict(
     showgrid=False,
@@ -46,7 +46,7 @@ app.layout = html.Div(
         ),
         # Dash graph
         dcc.Graph(id='clickable_plot'),
-        # Axises controller
+        # Axes controller
         html.Div(
             id='plot-controller',
             children=[
@@ -54,7 +54,8 @@ app.layout = html.Div(
                     id='chart_type',
                     options=[
                         {'label': '5D explorer', 'value': '5d'},
-                        {'label': '2D chemical space', 'value': 'cluster'}
+                        {'label': '2D chemical space', 'value': 'cluster'},
+                        {'label': 'Validation', 'value': 'val'}
                     ],
                     value='cluster'
                 ),
@@ -159,6 +160,15 @@ def structure_viewer(interactive_data, chart_name):
                 index = int(interactive_data['points'][0]['pointNumber'])
                 structure_name = df.iloc[index].name
                 id_in_paper = df.iloc[index, 0]
+            elif chart_name == 'val':
+                index = int(interactive_data['points'][i]['pointIndex'])
+                cluster_idx = interactive_data['points'][i]['curveNumber']
+                if cluster_idx == 0:
+                    structure_name = df[df.index <= 816].iloc[index].name
+                    id_in_paper = df[df.index <= 816].iloc[index][0]
+                else:
+                    structure_name = df[df.index > 816].iloc[index].name - 1
+                    id_in_paper = df[df.index > 816].iloc[index][0] - 1
             else:
                 index = int(interactive_data['points'][i]['pointIndex'])
                 cluster_idx = interactive_data['points'][i]['curveNumber'] + 1
@@ -200,7 +210,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                     opacity=0.5,
                     color=colors[int(cluster)],
                     line=dict(color='white', width=1),
-                    size=df[df.group == cluster].iloc[:, 4] + 8
+                    size=df[df.group == cluster].iloc[:, 3] + 10
                 )
             ))
         fig.update_layout(
@@ -216,7 +226,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
             yaxis=axis_template,
             showlegend=True,
             legend=dict(
-                font=dict(family='Arial'),
+                font=dict(family='Arial', size=16),
                 itemsizing='constant'
             ),
             margin={'t': 55, 'b': 10, 'l': 30},
@@ -270,6 +280,58 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
             width=800,
             height=600
         )
+    elif chart_type_value == 'val':
+        fig.add_trace(go.Scatter(
+            x=df.loc[:816, 'b3lypsoapval_pos0'],
+            y=df.loc[:816, 'b3lypsoapval_pos1'],
+            mode='markers',
+            name='572-molecule library',
+            text=df.loc[:816, 'ID in paper'],
+            marker=dict(
+                symbol='circle',
+                opacity=0.5,
+                color='blue',
+                line=dict(color='white', width=1),
+                size=df.loc[:816, 'Hydrogen evolution rate / µmol/h']*1.5 + 10
+            )
+        ))
+        fig.add_trace(go.Scatter(
+            x=df.loc[816:, 'b3lypsoapval_pos0'],
+            y=df.loc[816:, 'b3lypsoapval_pos1'],
+            mode='markers',
+            name='Blind test',
+            text=df.loc[816:, 'ID in paper'],
+            marker=dict(
+                symbol='circle',
+                opacity=0.8,
+                color='red',
+                line=dict(color='white', width=1),
+                size=df.loc[816:, 'Hydrogen evolution rate / µmol/h']*1.5 + 10
+            )
+        ))
+        fig.update_layout(
+            clickmode='event+select',
+            hovermode='closest',
+            hoverdistance=-1,
+            title=dict(
+                text='2D UMAP embeddings of the chemical space of the '
+                     '572-molecule library and blind test set',
+                font=dict(family='Arial', size=18),
+                y=0.95
+            ),
+            xaxis=axis_template,
+            yaxis=axis_template,
+            showlegend=True,
+            legend=dict(
+                font=dict(family='Arial', size=16),
+                itemsizing='constant',
+                bgcolor='rgba(0,0,0,0)',
+                x=0.005, y=0.99
+            ),
+            margin={'t': 55, 'b': 10, 'l': 30},
+            width=800,
+            height=600
+        )
     return fig
 
 
@@ -286,4 +348,4 @@ def display_selected_data(clickData, selectedData, chart_type_value):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
