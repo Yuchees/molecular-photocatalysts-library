@@ -55,7 +55,7 @@ app.layout = html.Div(
                     options=[
                         {'label': '5D explorer', 'value': '5d'},
                         {'label': '2D chemical space', 'value': 'cluster'},
-                        {'label': 'Validation', 'value': 'val'}
+                        {'label': 'Blind tests', 'value': 'val'}
                     ],
                     value='cluster'
                 ),
@@ -315,7 +315,7 @@ def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
             hoverdistance=-1,
             title=dict(
                 text='2D UMAP embeddings of the chemical space of the '
-                     '572-molecule library and blind test set',
+                     '572-molecule library and blind tests set',
                 font=dict(family='Arial', size=18),
                 y=0.95
             ),
