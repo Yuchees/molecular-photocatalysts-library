@@ -11,12 +11,18 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
+import numpy as np
+import random
+from openpyxl import load_workbook
 from utils import load_json
 
 app = dash.Dash(__name__)
 server = app.server
 
 df = pd.read_csv('./data/electronic_features.csv', index_col='ID')
+df_q = load_workbook('./data/questionnaire.xlsx')
+sheet = df_q.active
+
 columns_dict = [{'label': i, 'value': i} for i in df.columns[3:15]]
 size_dict = columns_dict + [{'label': 'Constant', 'value': 5}]
 axis_template = dict(
@@ -55,10 +61,22 @@ app.layout = html.Div(
                     options=[
                         {'label': '5D explorer', 'value': '5d'},
                         {'label': '2D chemical space', 'value': 'cluster'},
-                        {'label': 'Blind tests', 'value': 'val'}
+                        {'label': 'Blind tests', 'value': 'val'},
+                        {'label': 'Questionnaire', 'value': 'Challenge'}
                     ],
                     value='cluster'
                 ),
+                html.Div([
+                    html.Div(id='live-update-link',
+                             style={'font-size': '25px', 'marginLeft': 10}),
+                    dcc.Interval(
+                            id = 'interval-component',
+                            interval = 1*1000, # in milliseconds
+                            n_intervals = 0
+                    )
+                    # html.A("Link to the questionnaire", href=sheet.cell(row=random.randint(0, 20), column=2).value)
+                ]),
+
                 html.Div(
                     id='color-bar-control',
                     className='dropdown-control',
@@ -131,9 +149,9 @@ app.layout = html.Div(
             children=[
                 html.H3(className='viewer-title', children='Selected structure:'),
                 dcc.Loading(id='loading_selected', className='loading')
-            ])
-    ]
-)
+            ]
+        ),
+])
 
 
 def structure_viewer(interactive_data, chart_name):
@@ -346,6 +364,43 @@ def display_selected_data(clickData, selectedData, chart_type_value):
         data = selectedData
     return structure_viewer(interactive_data=data, chart_name=chart_type_value)
 
+@app.callback(dash.dependencies.Output('live-update-link', 'children'),
+              [dash.dependencies.Input('interval-component', 'n_intervals'),
+               dash.dependencies.Input('chart_type', 'value')])
+def update_link(n, chart_type_value):
+    if chart_type_value == 'Challenge':
+        return [html.A("Link to the questionnaire", href=sheet.cell(row=random.randint(0, 20), column=2).value)]
+
+# page_1_layout = html.Div([
+#     html.H5('Challenge_{}'.format(n)),
+#     dcc.Link(href= sheet.cell(row=n, column=2).value)
+#
+#     # dcc.Link(
+#     #     id='page-1-dropdown',
+#     #     options=[{'label': i, 'value': i} for i in ['LA', 'NYC', 'MTL']],
+#     #     value='LA'
+#     # ),
+#     # html.Div(id='page-1-content'),
+#     # html.Br(),
+#     # dcc.Link('Go to Page 2', href='/page-2'),
+#     # html.Br(),
+#     # dcc.Link('Go back to home', href='/'),
+# ])
+# @app.callback(dash.dependencies.Output('page-content', 'children'),
+#               [dash.dependencies.Input('url', 'pathname')])
+# n = np.random.randint(1,20)
+# def display_questionnaire(pathname):
+#     if pathname == '/questionnaire':
+#         return page_1_layout
+
+
+
+# @app.callback(dash.dependencies.Output('Questionnaire', 'children'),
+#               dash.dependencies.Input('chart_type', 'value'))
+# def display_selected_questionnaire(chart_type_value):
+#     if chart_type_value == 'Questionnaire':
+#         output = 'Challenge-1: https://docs.google.com/forms/d/1NvhlcUsIGIcE4vmc44KEoXGOXjQHxcFOjWYfNJtEpk4/edit?usp=sharing '
+#     return
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, use_reloader=True)
