@@ -133,3 +133,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/data/json_data_val/

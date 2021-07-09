@@ -11,7 +11,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
-import numpy as np
 import random
 from openpyxl import load_workbook
 from utils import load_json
@@ -64,18 +63,14 @@ app.layout = html.Div(
                         {'label': 'Blind tests', 'value': 'val'},
                         {'label': 'Questionnaire', 'value': 'Challenge'}
                     ],
-                    value='cluster'
+                    value='Challenge'
                 ),
-                html.Div([
-                    html.Div(id='live-update-link',
-                             style={'font-size': '25px', 'marginLeft': 10}),
-                    dcc.Interval(
-                            id = 'interval-component',
-                            interval = 60*1000, # in milliseconds
-                            n_intervals = 0
-                    )
-                ]),
-
+                html.Div(id='live-update-link'),
+                dcc.Interval(
+                    id='interval-component',
+                    interval=60 * 1000,  # in milliseconds
+                    n_intervals=0
+                ),
                 html.Div(
                     id='color-bar-control',
                     className='dropdown-control',
@@ -363,12 +358,17 @@ def display_selected_data(clickData, selectedData, chart_type_value):
         data = selectedData
     return structure_viewer(interactive_data=data, chart_name=chart_type_value)
 
+
 @app.callback(dash.dependencies.Output('live-update-link', 'children'),
               [dash.dependencies.Input('interval-component', 'n_intervals'),
                dash.dependencies.Input('chart_type', 'value')])
 def update_link(n, chart_type_value):
     if chart_type_value == 'Challenge':
-        return [html.A("Link to the questionnaire", href=sheet.cell(row=random.randint(1, 20), column=2).value)]
+        return [html.A(
+            "Link to the questionnaire",
+            href=sheet.cell(row=random.randint(1, 20), column=2).value
+        )]
+
 
 if __name__ == '__main__':
     app.run_server(debug=True, use_reloader=True)
