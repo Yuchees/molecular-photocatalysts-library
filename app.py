@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Interactive 2D molecular structure visualisation application
-Using T-SNE for dimensionality reduction
-@author: Yu Che
 """
 import dash
 import dash_bio as bio
@@ -46,8 +44,15 @@ app.layout = html.Div(
                 ),
                 html.H1(
                     id='chart-title',
-                    children='Small-molecule photocatalysts')
+                    children='Small-molecule photocatalysts'),
+                html.Div(id='live-update-link')
             ]
+        ),
+        # Reload pages for selecting challenge randomly
+        dcc.Interval(
+                id='interval-component',
+                interval=60*1000,  # in milliseconds
+                n_intervals=0
         ),
         # Dash graph
         dcc.Graph(id='clickable_plot'),
@@ -60,16 +65,9 @@ app.layout = html.Div(
                     options=[
                         {'label': '5D explorer', 'value': '5d'},
                         {'label': '2D chemical space', 'value': 'cluster'},
-                        {'label': 'Blind tests', 'value': 'val'},
-                        {'label': 'Questionnaire', 'value': 'Challenge'}
+                        {'label': 'Blind tests', 'value': 'val'}
                     ],
-                    value='Challenge'
-                ),
-                html.Div(id='live-update-link'),
-                dcc.Interval(
-                    id='interval-component',
-                    interval=60 * 1000,  # in milliseconds
-                    n_intervals=0
+                    value='cluster'
                 ),
                 html.Div(
                     id='color-bar-control',
@@ -138,6 +136,7 @@ app.layout = html.Div(
                        'X, Y, and Z axes are only active for 5D explorer.')
             ]
         ),
+        # Molecule 3D viewer
         html.Div(
             id='selected_structure',
             children=[
@@ -145,7 +144,8 @@ app.layout = html.Div(
                 dcc.Loading(id='loading_selected', className='loading')
             ]
         ),
-])
+    ]
+)
 
 
 def structure_viewer(interactive_data, chart_name):
@@ -363,11 +363,10 @@ def display_selected_data(clickData, selectedData, chart_type_value):
               [dash.dependencies.Input('interval-component', 'n_intervals'),
                dash.dependencies.Input('chart_type', 'value')])
 def update_link(n, chart_type_value):
-    if chart_type_value == 'Challenge':
-        return [html.A(
-            "Link to the questionnaire",
-            href=sheet.cell(row=random.randint(1, 20), column=2).value
-        )]
+    return html.A(
+        "Take the HER prediction challenges",
+        href=sheet.cell(row=random.randint(1, 20), column=2).value
+    )
 
 
 if __name__ == '__main__':

@@ -3,8 +3,7 @@ comments
  */
 
 #dash-logo {
-    display: inline-block;
-    float: left;
+    display: block;
     height: 60px;
     margin: 5px;
 }
@@ -12,9 +11,18 @@ comments
 #chart-title {
     display: inline-block;
     font-family: 'Times New Roman', serif;
-    font-size: 3.5em;
+    font-size: 3em;
+    width: 49%;
     color: #3D4B56;
     margin: 5px 10px;
+}
+
+#live-update-link {
+    display: inline-block;
+    font-family: 'Times New Roman', serif;
+    font-size: 2.5em;
+    width: 45%;
+    color: #3D4B56
 }
 
 #clickable_plot {
