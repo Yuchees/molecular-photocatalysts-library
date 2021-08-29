@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Interactive 2D molecular structure visualisation application
+Interactive multi dimensional molecular structure visualisation application
 """
 import dash
 import dash_bio as bio
@@ -13,22 +13,20 @@ import random
 from openpyxl import load_workbook
 from utils import load_json
 
+from plot import cluster_plot, val_plot, multi_plot
+
 app = dash.Dash(__name__)
 server = app.server
 
+# Loading data table
 df = pd.read_csv('./data/electronic_features.csv', index_col='ID')
 df_q = load_workbook('./data/questionnaire.xlsx')
 sheet = df_q.active
 
 columns_dict = [{'label': i, 'value': i} for i in df.columns[3:15]]
 size_dict = columns_dict + [{'label': 'Constant', 'value': 5}]
-axis_template = dict(
-    showgrid=False,
-    zeroline=False,
-    showline=False,
-    showticklabels=False,
-)
 
+# Dash HTML application
 app.layout = html.Div(
     id='main',
     className='app_main',
@@ -166,12 +164,15 @@ def structure_viewer(interactive_data, chart_name):
         )
         return mol_3d
     mol_div = []
+    # Extracting molecular index from Dash interactive data
     try:
         for i in range(len(interactive_data['points'])):
+            # 5D figure
             if chart_name == '5d':
                 index = int(interactive_data['points'][0]['pointNumber'])
                 structure_name = df.iloc[index].name
                 id_in_paper = df.iloc[index, 0]
+            # Validation figure
             elif chart_name == 'val':
                 index = int(interactive_data['points'][i]['pointIndex'])
                 cluster_idx = interactive_data['points'][i]['curveNumber']
@@ -181,12 +182,14 @@ def structure_viewer(interactive_data, chart_name):
                 else:
                     structure_name = df[df.index > 816].iloc[index].name - 1
                     id_in_paper = df[df.index > 816].iloc[index][0] - 1
+            # Cluster figure
             else:
                 index = int(interactive_data['points'][i]['pointIndex'])
                 cluster_idx = interactive_data['points'][i]['curveNumber'] + 1
                 structure_name = df[df.group == cluster_idx].iloc[index].name
                 id_in_paper = df[df.group == cluster_idx].iloc[index][0]
             json_path = './data/json_data/{}.json'.format(structure_name)
+            # Add molecular viewer
             viewer = single_3d_viewer(json_path, int(id_in_paper))
             mol_div.append(viewer)
     # Default structure
@@ -208,142 +211,16 @@ def structure_viewer(interactive_data, chart_name):
 def update_graph(chart_type_value, x_axis_column_name, y_axis_column_name,
                  z_axis_column_name, colour_column_value, size_column_value):
     fig = go.Figure()
+    # Update figures by different type name
     if chart_type_value == 'cluster':
-        colors = {1: 'red', 2: 'purple', 4: 'blue', 5: 'orange',  3: 'green'}
-        for cluster in [1, 2, 3, 4, 5]:
-            fig.add_trace(go.Scatter(
-                x=df[df.group == cluster].loc[:, 'pos_0'],
-                y=df[df.group == cluster].loc[:, 'pos_1'],
-                mode='markers',
-                text=df[df.group == cluster].iloc[:, 0],
-                name=cluster,
-                marker=dict(
-                    symbol='circle',
-                    opacity=0.5,
-                    color=colors[int(cluster)],
-                    line=dict(color='white', width=1),
-                    size=df[df.group == cluster].iloc[:, 3] + 10
-                )
-            ))
-        fig.update_layout(
-            clickmode='event+select',
-            hovermode='closest',
-            hoverdistance=-1,
-            title=dict(
-                text='2D UMAP embeddings of SOAP+REMatch chemical space',
-                font=dict(family='Arial', size=20),
-                y=0.95
-            ),
-            xaxis=axis_template,
-            yaxis=axis_template,
-            showlegend=True,
-            legend=dict(
-                font=dict(family='Arial', size=16),
-                itemsizing='constant'
-            ),
-            margin={'t': 55, 'b': 10, 'l': 30},
-            width=800,
-            height=600
-        )
+        fig = cluster_plot(fig, df)
     elif chart_type_value == '5d':
-        if isinstance(size_column_value, int):
-            size = 5
-        else:
-            size = df.loc[:, size_column_value] + 8
-        fig.add_trace(
-            go.Scatter3d(
-                x=df[x_axis_column_name],
-                y=df[y_axis_column_name],
-                z=df[z_axis_column_name],
-                mode='markers',
-                text=df.iloc[:, 0],
-                marker=dict(
-                    size=size,
-                    color=df[colour_column_value],
-                    colorbar=dict(
-                        thicknessmode='pixels',
-                        thickness=25,
-                        title=dict(
-                            text=colour_column_value,
-                            side='right'
-                        )
-                    ),
-                    colorscale='RdBu',
-                    reversescale=True,
-                    showscale=True
-                )
-            )
-        )
-        fig.update_layout(
-            clickmode='event+select',
-            title=dict(
-                text='5D explorer of hydrogen evolution activity '
-                     'and molecular properties',
-                font=dict(family='Arial', size=20),
-                y=0.95
-            ),
-            scene=dict(
-                xaxis={'title': x_axis_column_name, 'zeroline': True},
-                yaxis={'title': y_axis_column_name, 'zeroline': True},
-                zaxis={'title': z_axis_column_name, 'zeroline': True},
-            ),
-            margin={'t': 55, 'b': 10, 'l': 30},
-            font=dict(family='Arial'),
-            width=800,
-            height=600
+        fig = multi_plot(
+            fig, df, x_axis_column_name, y_axis_column_name,
+            z_axis_column_name, size_column_value, colour_column_value
         )
     elif chart_type_value == 'val':
-        fig.add_trace(go.Scatter(
-            x=df.loc[:816, 'b3lypsoapval_pos0'],
-            y=df.loc[:816, 'b3lypsoapval_pos1'],
-            mode='markers',
-            name='572-molecule library',
-            text=df.loc[:816, 'ID in paper'],
-            marker=dict(
-                symbol='circle',
-                opacity=0.5,
-                color='blue',
-                line=dict(color='white', width=1),
-                size=df.loc[:816, 'Hydrogen evolution rate / µmol/h']*1.5 + 10
-            )
-        ))
-        fig.add_trace(go.Scatter(
-            x=df.loc[816:, 'b3lypsoapval_pos0'],
-            y=df.loc[816:, 'b3lypsoapval_pos1'],
-            mode='markers',
-            name='Blind test',
-            text=df.loc[816:, 'ID in paper'],
-            marker=dict(
-                symbol='circle',
-                opacity=0.8,
-                color='red',
-                line=dict(color='white', width=1),
-                size=df.loc[816:, 'Hydrogen evolution rate / µmol/h']*1.5 + 10
-            )
-        ))
-        fig.update_layout(
-            clickmode='event+select',
-            hovermode='closest',
-            hoverdistance=-1,
-            title=dict(
-                text='2D UMAP embeddings of the chemical space of the '
-                     '572-molecule library and blind tests set',
-                font=dict(family='Arial', size=18),
-                y=0.95
-            ),
-            xaxis=axis_template,
-            yaxis=axis_template,
-            showlegend=True,
-            legend=dict(
-                font=dict(family='Arial', size=16),
-                itemsizing='constant',
-                bgcolor='rgba(0,0,0,0)',
-                x=0.005, y=0.99
-            ),
-            margin={'t': 55, 'b': 10, 'l': 30},
-            width=800,
-            height=600
-        )
+        fig = val_plot(fig, df)
     return fig
 
 
