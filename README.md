@@ -1,4 +1,5 @@
 # Interactive molecular data explorer and online survey application
+[![DOI](https://zenodo.org/badge/258546525.svg)](https://zenodo.org/badge/latestdoi/258546525)
 
 This repository is the source of the [web application](https://www.molecular-photocatalysts-library.app) 
 in our [published paper](https://doi.org/10.1039/D1SC02150H).
