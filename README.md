@@ -11,7 +11,7 @@ The web app is deployed to Heroku server.
 
 
 ## Authors
-Yu Che, Hao Pin, Linjiang Chen
+Yu Che, Pinhao Gu, Linjiang Chen
 
 ### Related publication:
 * Li, X., Maffettone, P. M., Che, Y., Liu, T., Chen, L., & Cooper, A. (2021). 
