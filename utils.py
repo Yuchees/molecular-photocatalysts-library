@@ -7,9 +7,7 @@ import json
 import re
 import warnings
 import pathlib
-
 import parmed as pmd
-from dash_bio_utils import styles_parser
 
 
 def create_data(pdb_path):
